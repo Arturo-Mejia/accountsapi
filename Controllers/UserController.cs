@@ -15,15 +15,16 @@ namespace apitest.Controllers
         [Route("create")]
         public JsonResult create([FromBody] createUser acc) 
         {
-            User useracc = new User();
-            useracc.Email = acc.Email;
-            useracc.Username = acc.Username;
-            useracc.Password = acc.Password;
-            _db.Users.Add(useracc);
-            _db.SaveChanges();
-
+           
             try 
             {
+                User useracc = new User();
+                useracc.Email = acc.Email;
+                useracc.Username = acc.Username;
+                useracc.Password = acc.Password;
+                _db.Users.Add(useracc);
+                _db.SaveChanges();
+
                 return new JsonResult(new { message = "Registrado correctamente" })
                 {
                     StatusCode = 200
