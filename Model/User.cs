@@ -13,7 +13,7 @@ public partial class User
 
     public string? Password { get; set; }
 
-    public virtual ICollection<Account> Accounts { get; set; } = new List<Account>();
+    public DateTime? CreatedDate { get; set; } = default(DateTime?);
 }
 
 public class createUser 
