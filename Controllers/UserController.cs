@@ -1,4 +1,5 @@
-﻿using apitest.Model;
+﻿using apitest.Data;
+using apitest.Model;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -28,6 +29,7 @@ namespace apitest.Controllers
                 useracc.Email = acc.Email;
                 useracc.Username = acc.Username;
                 useracc.Password = pass;
+                useracc.CreatedDate = DateTime.Now;
                 _db.Users.Add(useracc);
                 _db.SaveChanges();
 

@@ -1,4 +1,5 @@
-﻿using apitest.Model;
+﻿using apitest.Data;
+using apitest.Model;
 using Microsoft.AspNetCore.Mvc;
 
 namespace apitest.Controllers
@@ -14,9 +15,10 @@ namespace apitest.Controllers
             try 
             {
                 Account acc = new Account();
-                acc.Account1 = account.Account;
+                acc.Account1 = account.descripcion;
                 acc.Iduser = account.Iduser;
                 acc.Pass = account.Pass;
+                acc.useracc = account.useraccount;
                 _db.Accounts.Add(acc);
                 _db.SaveChanges();
                 return StatusCode(StatusCodes.Status200OK, new { message ="Guardado correctamente" });

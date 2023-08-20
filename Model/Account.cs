@@ -16,15 +16,15 @@ public partial class Account
     public string? Pass { get; set; }
 
     public DateTime? Created { get; set; }
-    public virtual User? IduserNavigation { get; set; }
 }
 
 
 public class CreateAccount
 {
     public int? Iduser { get; set; }
+    public string? descripcion { get; set; }
 
-    public string? Account { get; set; }
+    public string? useraccount { get; set; }
 
     public string? Pass { get; set; }
 
