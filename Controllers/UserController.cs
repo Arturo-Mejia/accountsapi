@@ -23,20 +23,31 @@ namespace apitest.Controllers
         {
             try
             {
-
-                string pass = SecurityPass.Encrypt(acc.Password);
-                User useracc = new User();
-                useracc.Email = acc.Email;
-                useracc.Username = acc.Username;
-                useracc.Password = pass;
-                useracc.CreatedDate = DateTime.Now;
-                _db.Users.Add(useracc);
-                _db.SaveChanges();
-
-                return new JsonResult(new { message = "Registrado correctamente" })
+                var users = _db.Users.Where(U => U.Email == acc.Email).ToList();
+                if (users.Count > 0)
                 {
-                    StatusCode = 200
-                };
+                    return new JsonResult(new { Message = "El email ya se encuentra registrado, por favor ingrese uno diferente"}) 
+                    {
+                        StatusCode = 400
+                    };
+                }
+                else 
+                {
+                    string pass = SecurityPass.Encrypt(acc.Password);
+                    User useracc = new User();
+                    useracc.Email = acc.Email;
+                    useracc.Username = acc.Username;
+                    useracc.Password = pass;
+                    useracc.CreatedDate = DateTime.Now;
+                    _db.Users.Add(useracc);
+                    _db.SaveChanges();
+
+                    return new JsonResult(new { message = "Registrado correctamente" })
+                    {
+                        StatusCode = 200
+                    };
+                }
+                
             }
             catch (Exception ex)
             {
@@ -61,7 +72,12 @@ namespace apitest.Controllers
                     var user = _db.Users.SingleOrDefault(x => x.Id == id);
                     if (user != null)
                     {
-                        // procedimiento almcenado para eliminar todas las cuentas del usuario
+                        //eliminar todas las cuentas del usuario
+                        var accounts = _db.Accounts.Where(x => x.Iduser == id);
+                        foreach (var acc in accounts) 
+                        {
+                            _db.Accounts.Remove(acc);
+                        }
 
                         _db.Users.Remove(user);
                         _db.SaveChanges();
@@ -97,7 +113,9 @@ namespace apitest.Controllers
                 var user = _db.Users.Find(id);
                 if (user != null)
                 {
-                    return new JsonResult(user)
+                    var obj = new { Email = user.Email, Username = user.Username,
+                        Password = SecurityPass.Decrypt(user.Password), Createdadate = user.CreatedDate }; 
+                    return new JsonResult(obj)
                     {
                         StatusCode = 200
                     };
@@ -117,36 +135,7 @@ namespace apitest.Controllers
              
         }
 
-        [HttpGet]
-        [Route("decrypt")]
-        public async Task<IActionResult> DecryptPassUser(string idu)
-        {
-            int id = SecurityPass.getIdUser(idu);
-            if (id != -1)
-            {
-                var user = _db.Users.Find(id);
-                if (user != null)
-                {
-                    string password = SecurityPass.Decrypt(user.Password);
-                    return new JsonResult(new { password = password })
-                    {
-                        StatusCode = 200
-                    };
-                }
-                else
-                {
-                    return new JsonResult(new { message = "Usuario no encontrado" })
-                    {
-                        StatusCode = 404
-                    };
-                }
-            }
-            else 
-            {
-                return StatusCode(StatusCodes.Status404NotFound, new { message = "No se encontró al usuario" });    
-            }
-             
-        }
+   
 
         [HttpPost]
         [Route("login")]
@@ -166,16 +155,16 @@ namespace apitest.Controllers
                 }
                 else 
                 {
-                    return new JsonResult(new { message = "credenciales correctas" })
+                    return new JsonResult(new { message = "credenciales incorrectas" })
                     {
-                        StatusCode = 200
+                        StatusCode = 404
                     };
                 }
                
             }
             else 
             {
-                return new JsonResult(new { message = "credenciales correctas" })
+                return new JsonResult(new { message = "credenciales incorrectas" })
                 {
                     StatusCode = 404
                 };

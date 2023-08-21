@@ -39,19 +39,27 @@ namespace apitest.Controllers
 
         [HttpDelete]
         [Route("delete")]
-        public async Task<IActionResult> delete(int id) 
+        public async Task<IActionResult> delete(string idu, int idaccount) 
         {
-            try 
-            {      
-                var acc = _db.Accounts.FirstOrDefault(x => x.Id == id);
-                if (acc != null) 
+            try
+            {
+                int id = SecurityPass.getIdUser(idu);
+                if (id != -1)
                 {
-                    _db.Accounts.Remove(acc);
-                    _db.SaveChanges();
-                    return StatusCode(StatusCodes.Status200OK, new { message = "Eliminado correctamente" });
+                    var acc = _db.Accounts.FirstOrDefault(x => x.Id == idaccount && x.Iduser==id);
+                    if (acc != null)
+                    {
+                        _db.Accounts.Remove(acc);
+                        _db.SaveChanges();
+                        return StatusCode(StatusCodes.Status200OK, new { message = "Eliminado correctamente" });
+                    }
+                    {
+                        return StatusCode(StatusCodes.Status404NotFound, new { message = "Cuenta no encontrada" });
+                    }
                 }
+                else 
                 {
-                    return StatusCode(StatusCodes.Status404NotFound, new { message = "Cuenta no encontrada" });
+                    return StatusCode(StatusCodes.Status404NotFound, new { message = "No se encontró al usuario" });
                 }
                  
             }catch (Exception ex) 
@@ -72,7 +80,18 @@ namespace apitest.Controllers
                     var accounts = _db.Accounts.Where(acc => acc.Iduser == id).ToList();
                     if (accounts.Count > 0)
                     {
-                        return StatusCode(StatusCodes.Status200OK, accounts);
+                        List<EditAccount> list = new List<EditAccount>();
+                        foreach (var acc in accounts) 
+                        {
+                            EditAccount ea = new EditAccount();
+                            ea.id = acc.Id;
+                            ea.Iduser = idu;
+                            ea.descripcion = acc.Account1;
+                            ea.useraccount = acc.useracc; 
+                            ea.Pass = acc.Pass;
+                            list.Add(ea);
+                        }
+                        return StatusCode(StatusCodes.Status200OK, list);
                     }
                     else
                     {
@@ -95,19 +114,43 @@ namespace apitest.Controllers
 
         [HttpGet]
         [Route("getAccount")]
-        public async Task<IActionResult> getAccount(int id)
+        public async Task<IActionResult> getAccount(string idu, int idaccount)
         {
             try
             {
-                var acc = _db.Accounts.Find(id);
-                if (acc == null)
+                int id = SecurityPass.getIdUser(idu);
+                if (id != -1)
                 {
-                    return StatusCode(StatusCodes.Status404NotFound, new { message = "No se encontraron datos" });
+                    var acc = _db.Accounts.Find(idaccount);
+                    if (acc == null)
+                    {
+                        return StatusCode(StatusCodes.Status404NotFound, new { message = "No se encontraron datos" });
+                    }
+                    else
+                    {
+
+                        if (acc.Iduser == id)
+                        {
+                            EditAccount ea = new EditAccount();
+                            ea.id = acc.Id;
+                            ea.Iduser = idu;
+                            ea.descripcion = acc.Account1;
+                            ea.useraccount = acc.useracc;
+                            ea.Pass = SecurityPass.Decrypt(acc.Pass);
+                            return StatusCode(StatusCodes.Status200OK, ea);
+                        }
+                        else 
+                        {
+                            return StatusCode(StatusCodes.Status400BadRequest, new { Message = "La cuenta no pertenece al usuario" });
+                        }
+                        
+                    }
                 }
                 else 
                 {
-                    return StatusCode(StatusCodes.Status200OK, acc);
+                    return StatusCode(StatusCodes.Status404NotFound, new { message = "No se encontró al usuario" });
                 }
+                   
                 
             }
             catch (Exception ex)
@@ -118,7 +161,7 @@ namespace apitest.Controllers
 
         [HttpPut]
         [Route("UpdateAccount")]
-        public async Task<IActionResult>updateAccount(EditAccount account) 
+        public async Task<IActionResult>updateAccount([FromBody]EditAccount account) 
         {
             int id = SecurityPass.getIdUser(account.Iduser);
             if (id != -1)
@@ -146,19 +189,5 @@ namespace apitest.Controllers
               
         }
 
-        [HttpGet]
-        [Route("decryptpasswordaccount")]
-        public async Task<IActionResult> decryptPasswordAccount(string password) 
-        {
-            try
-            {
-                string pass = SecurityPass.Decrypt(password); 
-                return StatusCode(StatusCodes.Status200OK, new { password = pass });
-            }
-            catch (Exception ex) 
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
-            }
-        }
     }
 }
