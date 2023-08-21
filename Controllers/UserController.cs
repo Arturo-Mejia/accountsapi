@@ -51,22 +51,33 @@ namespace apitest.Controllers
 
         [HttpDelete]
         [Route("delete")]
-        public async Task<IActionResult> deleteUser(int id)
-        {
+        public async Task<IActionResult> deleteUser(string idu)
+        {   
             try
             {
-                var user = _db.Users.SingleOrDefault(x => x.Id == id);
-                if (user != null)
+                int id = SecurityPass.getIdUser(idu);
+                if (id != -1)
                 {
-                    _db.Users.Remove(user);
-                    _db.SaveChanges();
+                    var user = _db.Users.SingleOrDefault(x => x.Id == id);
+                    if (user != null)
+                    {
+                        // procedimiento almcenado para eliminar todas las cuentas del usuario
 
-                    return StatusCode(StatusCodes.Status200OK, new { message = "Eliminado correctamente" });
+                        _db.Users.Remove(user);
+                        _db.SaveChanges();
+
+                        return StatusCode(StatusCodes.Status200OK, new { message = "Eliminado correctamente" });
+                    }
+                    else
+                    {
+                        return StatusCode(StatusCodes.Status404NotFound, new { message = "No se encontró al usuario" });
+                    }
                 }
-                else
+                else 
                 {
                     return StatusCode(StatusCodes.Status404NotFound, new { message = "No se encontró al usuario" });
                 }
+                
 
             }
             catch (Exception ex)
@@ -74,72 +85,81 @@ namespace apitest.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex });
             }
         }
-
-        [HttpGet]
-        [Route("getUsers")]
-        public IActionResult getUsers()
-        {
-            var users = _db.Users.ToList();
-
-            return new JsonResult(users);
-        }
-
+        
 
         [HttpGet]
         [Route("getUser")]
-        public async Task<IActionResult> getUser(int id)
+        public async Task<IActionResult> getUser(string idu)
         {
-            var user = _db.Users.Find(id);
-            if (user != null)
+            int id = SecurityPass.getIdUser(idu);
+            if (id != -1)
             {
-                return new JsonResult(user)
+                var user = _db.Users.Find(id);
+                if (user != null)
                 {
-                    StatusCode = 200
-                };
+                    return new JsonResult(user)
+                    {
+                        StatusCode = 200
+                    };
+                }
+                else
+                {
+                    return new JsonResult(new { message = "Usuario no encontrado" })
+                    {
+                        StatusCode = 404
+                    };
+                }
             }
-            else
+            else 
             {
-                return new JsonResult(new { message = "Usuario no encontrado" })
-                {
-                    StatusCode = 404
-                };
+                return StatusCode(StatusCodes.Status404NotFound, new { message = "No se encontró al usuario" });
             }
-
+             
         }
 
         [HttpGet]
         [Route("decrypt")]
-        public async Task<IActionResult> DecryptPassUser(int id)
+        public async Task<IActionResult> DecryptPassUser(string idu)
         {
-            var user = _db.Users.Find(id);
-            if (user != null)
+            int id = SecurityPass.getIdUser(idu);
+            if (id != -1)
             {
-                string password = SecurityPass.Decrypt(user.Password);
-                return new JsonResult(password)
+                var user = _db.Users.Find(id);
+                if (user != null)
                 {
-                    StatusCode = 200
-                };
+                    string password = SecurityPass.Decrypt(user.Password);
+                    return new JsonResult(new { password = password })
+                    {
+                        StatusCode = 200
+                    };
+                }
+                else
+                {
+                    return new JsonResult(new { message = "Usuario no encontrado" })
+                    {
+                        StatusCode = 404
+                    };
+                }
             }
-            else
+            else 
             {
-                return new JsonResult(new { message = "Usuario no encontrado" })
-                {
-                    StatusCode = 404
-                };
+                return StatusCode(StatusCodes.Status404NotFound, new { message = "No se encontró al usuario" });    
             }
+             
         }
 
         [HttpPost]
         [Route("login")]
         public  async Task<IActionResult> login(string email,string pass) 
         {
-            var user = _db.Users.Where(u => u.Username == email || u.Email == email).ToList();
+            var user = _db.Users.Where(u => u.Email == email).ToList();
             if (user.Count > 0)
             {
                 string password = SecurityPass.Decrypt(user.First().Password);
                 if (password.Equals(pass))
                 {
-                    return new JsonResult(new { message = "credenciales correctas" })
+                    string idu = SecurityPass.genIduser(user.First().Id);
+                    return new JsonResult(new { message = "credenciales correctas", iduser = idu  })
                     {
                         StatusCode = 200
                     };
@@ -162,6 +182,35 @@ namespace apitest.Controllers
             }
             
         }
+
+
+        [HttpPut]
+        [Route("updatepassword")]
+        public async Task<IActionResult> updatePassword(string idu, string newpass) 
+        {
+            try
+            {
+                int id = SecurityPass.getIdUser(idu);
+                if (id != -1)
+                {
+                    var user = _db.Users.Find(id);
+                    user.Password = SecurityPass.Encrypt(newpass);
+                    _db.Users.Update(user);
+                    _db.SaveChanges(); 
+                    return StatusCode(StatusCodes.Status200OK, new { message = "Actualizado correctamente" });
+                }
+                else 
+                {
+                    return StatusCode(StatusCodes.Status404NotFound, new { message = "No se encontró al usuario" });
+                }
+                    
+            }
+            catch (Exception ex) 
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex });
+            }
+        }
+
 
     }
 }

@@ -11,17 +11,26 @@ namespace apitest.Controllers
         [HttpPost]
         [Route("create")]
         public async Task<IActionResult> create([FromBody] CreateAccount account)
-        {
+        { 
             try 
             {
-                Account acc = new Account();
-                acc.Account1 = account.descripcion;
-                acc.Iduser = account.Iduser;
-                acc.Pass = account.Pass;
-                acc.useracc = account.useraccount;
-                _db.Accounts.Add(acc);
-                _db.SaveChanges();
-                return StatusCode(StatusCodes.Status200OK, new { message ="Guardado correctamente" });
+                int id = SecurityPass.getIdUser(account.Iduser);
+                if (id != -1)
+                {
+                    Account acc = new Account();
+                    acc.Account1 = account.descripcion;
+                    acc.Iduser = id;
+                    acc.Pass = SecurityPass.Encrypt(account.Pass);
+                    acc.useracc = account.useraccount;
+                    _db.Accounts.Add(acc);
+                    _db.SaveChanges();
+                    return StatusCode(StatusCodes.Status200OK, new { message = "Guardado correctamente" });
+                }
+                else 
+                {
+                    return StatusCode(StatusCodes.Status404NotFound, new { message = "No se encontró al usuario" });
+                }
+                   
             }catch (Exception ex) 
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
@@ -53,19 +62,29 @@ namespace apitest.Controllers
 
         [HttpGet]
         [Route("getAccounts")]
-        public async Task<IActionResult> getAccounts(int iduser)
+        public async Task<IActionResult> getAccounts(string idu)
         {
             try
             {
-                var accounts = _db.Accounts.Where(acc => acc.Iduser == iduser).ToList();
-                if (accounts.Count > 0)
+                int id = SecurityPass.getIdUser(idu);
+                if (id != -1)
                 {
-                    return StatusCode(StatusCodes.Status200OK, accounts);
+                    var accounts = _db.Accounts.Where(acc => acc.Iduser == id).ToList();
+                    if (accounts.Count > 0)
+                    {
+                        return StatusCode(StatusCodes.Status200OK, accounts);
+                    }
+                    else
+                    {
+                        return StatusCode(StatusCodes.Status404NotFound, new { message = "No se encontraron registros" });
+                    }
+
                 }
                 else 
                 {
-                    return StatusCode(StatusCodes.Status404NotFound, new { message = "No se encontraron registros" });
+                    return StatusCode(StatusCodes.Status404NotFound, new { message = "No se encontró al usuario" });
                 }
+                  
                 
             }
             catch (Exception ex)
@@ -92,6 +111,51 @@ namespace apitest.Controllers
                 
             }
             catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
+            }
+        }
+
+        [HttpPut]
+        [Route("UpdateAccount")]
+        public async Task<IActionResult>updateAccount(EditAccount account) 
+        {
+            int id = SecurityPass.getIdUser(account.Iduser);
+            if (id != -1)
+            {
+                var acc = _db.Accounts.Find(account.id);
+                if (acc != null)
+                {
+                    acc.Account1 = account.descripcion;
+                    acc.Iduser = id;
+                    acc.Pass = SecurityPass.Encrypt(account.Pass);
+                    acc.useracc = account.useraccount;
+                    _db.Accounts.Add(acc);
+                    _db.SaveChanges();
+                    return StatusCode(StatusCodes.Status200OK, new { message = "Actualizado correctamente" });
+                }
+                else 
+                {
+                    return StatusCode(StatusCodes.Status404NotFound, new { message = "No se encontró la cuenta" });
+                }
+            }
+            else 
+            {
+                return StatusCode(StatusCodes.Status404NotFound, new { message = "No se encontró al usuario" });
+            }
+              
+        }
+
+        [HttpGet]
+        [Route("decryptpasswordaccount")]
+        public async Task<IActionResult> decryptPasswordAccount(string password) 
+        {
+            try
+            {
+                string pass = SecurityPass.Decrypt(password); 
+                return StatusCode(StatusCodes.Status200OK, new { password = pass });
+            }
+            catch (Exception ex) 
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
             }

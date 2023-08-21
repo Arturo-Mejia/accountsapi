@@ -1,7 +1,9 @@
-﻿using System.Security.Cryptography;
+﻿using Newtonsoft.Json;
+using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 
-namespace apitest.Model
+namespace apitest.Data
 {
     public class SecurityPass
     {
@@ -61,5 +63,31 @@ namespace apitest.Model
                 }
             }
         }
+
+        public static string genIduser(int id)
+        {
+            var obj = new { iduser = id };
+            var objs = obj.ToString();
+            string objsencrypt = Encrypt(objs);
+            return objsencrypt;
+        }
+
+        public static int getIdUser(string idu) 
+        {
+            try
+            {
+                string data = SecurityPass.Decrypt(idu);
+                data = data.Replace("=",":");
+                var jsonObject = JsonConvert.DeserializeObject<dynamic>(data);
+                string id = jsonObject.iduser;
+                return int.Parse(id);
+            }
+            catch (Exception ex) 
+            {
+                return -1; 
+            } 
+        }
+
+
     }
 }

@@ -21,7 +21,19 @@ public partial class Account
 
 public class CreateAccount
 {
-    public int? Iduser { get; set; }
+    public string? Iduser { get; set; }
+    public string? descripcion { get; set; }
+
+    public string? useraccount { get; set; }
+
+    public string? Pass { get; set; }
+
+}
+
+public class EditAccount
+{
+    public int id { get; set; }
+    public string? Iduser { get; set; }
     public string? descripcion { get; set; }
 
     public string? useraccount { get; set; }
