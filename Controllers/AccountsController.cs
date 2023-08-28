@@ -175,7 +175,7 @@ namespace apitest.Controllers
                     acc.Iduser = id;
                     acc.Pass = SecurityPass.Encrypt(account.Pass);
                     acc.useracc = account.useraccount;
-                    _db.Accounts.Add(acc);
+                    _db.Accounts.Update(acc);
                     _db.SaveChanges();
                     return StatusCode(StatusCodes.Status200OK, new { message = "Actualizado correctamente" });
                 }
