@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace apitest.Controllers
 {
+    [ApiController]
+    [Route("[controller]")]
     public class AccountsController : ControllerBase
     {
         AmhapiPasswordsContext _db = new AmhapiPasswordsContext();
@@ -88,7 +90,7 @@ namespace apitest.Controllers
                             ea.Iduser = idu;
                             ea.descripcion = acc.Account1;
                             ea.useraccount = acc.useracc; 
-                            ea.Pass = acc.Pass;
+                            ea.Pass = SecurityPass.Decrypt(acc.Pass);
                             list.Add(ea);
                         }
                         return StatusCode(StatusCodes.Status200OK, list);
